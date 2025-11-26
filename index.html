@@ -12,14 +12,23 @@
     body { font-family: 'Inter', sans-serif; }
     @media print { .no-print{display:none!important} body{color:#000;background:#fff} }
 
-    /* Zoom e Imagens */
+    /* --- LÓGICA DE ZOOM E IMAGEM --- */
     .zoom-area { position: relative; overflow: hidden; width: fit-content; margin: 0 auto; cursor: crosshair; }
-    .zoom-area img { transition: transform 0.1s ease; transform-origin: var(--zoom-x, 50%) var(--zoom-y, 50%); max-width: 100%; border-radius: 8px; display: block; }
+    .zoom-area img { 
+      transition: transform 0.1s ease; 
+      transform-origin: var(--zoom-x, 50%) var(--zoom-y, 50%); 
+      max-width: 100%; 
+      border-radius: 8px; 
+      display: block;
+    }
+    /* O Zoom acontece aqui */
     .zoom-area:hover img { transform: scale(2.5); }
 
+    /* Termos Clicáveis */
     .termo { color: #d97706; font-weight: 700; cursor: help; border-bottom: 2px dotted #d97706; transition: all 0.2s; }
     .termo:hover { background-color: #fef3c7; color: #92400e; }
 
+    /* Cards */
     .taxon-card { transition: all 0.2s ease-in-out; }
     .taxon-card:hover { transform: translateY(-2px); border-color: #f59e0b; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
   </style>
@@ -52,17 +61,26 @@
     </div>
 
     <div id="telaChave" class="hidden flex flex-col gap-6">
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
-        <div>
-          <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Chave Ativa</span>
-          <h2 id="tituloChaveAtiva" class="text-xl font-bold text-slate-800">...</h2>
+      
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 justify-between items-center sticky top-20 z-40">
+        <div class="flex items-center gap-3">
+          <button id="btnVoltar" onclick="voltarPasso()" class="hidden flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-amber-600 bg-slate-100 hover:bg-amber-50 px-3 py-2 rounded-lg transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Voltar
+          </button>
+          <div>
+            <span class="text-xs font-bold text-amber-600 uppercase tracking-wider block">Chave Ativa</span>
+            <h2 id="tituloChaveAtiva" class="text-lg font-bold text-slate-800 leading-tight">...</h2>
+          </div>
         </div>
         <div class="text-right">
           <span class="text-xs text-slate-400">Passo Atual</span>
           <div id="indicadorPasso" class="text-2xl font-bold text-slate-700">1</div>
         </div>
       </div>
+
       <div id="containerDilemas" class="grid gap-6 md:grid-cols-1"></div>
+
       <div id="painelImagem" class="hidden bg-white p-6 rounded-xl border-2 border-slate-200 shadow-lg relative mt-4">
         <div class="flex justify-between items-center mb-4">
           <p class="text-sm font-bold text-slate-600 flex items-center gap-2">Ilustração da característica</p>
@@ -75,29 +93,42 @@
       </div>
     </div>
 
-    <div id="telaResultado" class="hidden py-10 max-w-2xl mx-auto">
-      <div class="text-center mb-8">
+    <div id="telaResultado" class="hidden py-10 max-w-2xl mx-auto relative">
+      
+      <button onclick="voltarPasso()" class="absolute top-0 left-0 flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-amber-600 mb-4">
+         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+         Voltar à chave
+      </button>
+
+      <div class="text-center mb-8 mt-6">
         <div class="inline-flex items-center justify-center p-3 bg-green-100 text-green-700 rounded-full mb-4">
           <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
         </div>
         <h2 class="text-3xl font-bold text-slate-900">Identificação Concluída</h2>
         <p class="text-slate-600 mt-2">O espécime pertence ao gênero:</p>
       </div>
+
       <div class="bg-white border-2 border-green-500 rounded-2xl shadow-xl overflow-hidden">
         <div class="bg-green-50 p-6 text-center border-b border-green-100">
           <span id="nomeGeneroFinal" class="text-4xl font-bold text-slate-800 italic">Nome</span>
         </div>
+        
         <div class="p-6 bg-white flex flex-col items-center">
-          <div class="w-full max-w-md bg-slate-100 rounded-lg overflow-hidden border border-slate-200 mb-2 relative">
-             <img id="imgResultadoFinal" class="w-full h-64 object-cover" src="" alt="Foto do gênero" onerror="this.src='https://via.placeholder.com/600x400?text=Sem+Imagem'">
-             <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1 px-3 text-center">Exemplo representativo</div>
+          <div class="zoom-area w-full max-w-md bg-slate-100 rounded-lg overflow-hidden border border-slate-200 mb-2 relative group">
+             <img id="imgResultadoFinal" class="w-full h-64 object-cover block" src="" alt="Foto do gênero" onerror="this.src='https://via.placeholder.com/600x400?text=Sem+Imagem'">
+             
+             <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1 px-3 text-center pointer-events-none">
+               Exemplo representativo (Passe o mouse para ampliar)
+             </div>
           </div>
         </div>
+
         <div class="bg-slate-50 p-6 border-t border-slate-100">
           <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Referências Específicas</h3>
           <div id="listaLinksExternos" class="space-y-3"></div>
         </div>
       </div>
+
       <div class="mt-8 text-center">
         <button onclick="resetarChave()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-8 rounded-lg shadow transition">Identificar outro espécime</button>
       </div>
@@ -112,7 +143,7 @@
     document.getElementById('ano').textContent = new Date().getFullYear();
 
     /* =========================================
-       1. SISTEMA DE IMAGENS (Seu Original)
+       1. SISTEMA DE IMAGENS E ZOOM
        ========================================= */
     const TERMOS_IMAGEM = [
       "Abelhas muito pequenas","escutelo pouco projetado sobre o metanoto","espaço malar","cerdas da superfície interna do basitarso posterior formando fileiras transversais",
@@ -149,6 +180,7 @@
       painel.scrollIntoView({behavior:'smooth', block:'center'});
     });
 
+    // Lógica de Zoom (Funciona para qualquer .zoom-area img)
     document.addEventListener('mousemove', function(e){
       const el = e.target;
       if(el.tagName !== 'IMG') return;
@@ -167,7 +199,7 @@
     const DADOS_CHAVE = {
       'Meliponini': {
         titulo: 'Tribo Meliponini (Operárias)',
-        descricao: 'Chave para identificação de gêneros de abelhas sem ferrão (Neotropical). Texto completo.',
+        descricao: 'Chave para identificação de gêneros de abelhas sem ferrão (Neotropical).',
         passos: [
           {
             id: 1,
@@ -182,11 +214,9 @@
               { 
                 rotulo: "2", 
                 texto: "Integumento em geral fosco e densamente pontilhado-reticulado, se brilhante então pelo menos com alguma reticulação evidente no mesossoma; base da célula marginal bojuda (Fig. 8.25); carena pré-occipital presente, em geral conspícua; escutelo distintamente convexo no sentido antero-posterior.", 
-                
-                /* --- RESULTADO: TRIGONISCA (Links Específicos) --- */
                 resultado: { 
                   genero: "Trigonisca", 
-                  imagem: "res_trigonisca.jpg", // Nome da foto na pasta img/
+                  imagem: "res_trigonisca.jpg", 
                   links: [
                     { rotulo: "Catálogo Moure", url: "https://moure.cria.org.br/catalogue?id=117383" },
                     { rotulo: "GBIF", url: "https://www.gbif.org/species/1341981" },
@@ -199,8 +229,6 @@
               { 
                 rotulo: "2'", 
                 texto: "Integumento extremamente liso e brilhante, com pontuação muito fina e esparsa; base da célula marginal normal; carena pré-occipital ausente; escutelo achatado e plano.", 
-                
-                /* --- RESULTADO: LEUROTRIGONA (Exemplo Genérico - Você deve editar os links) --- */
                 resultado: { 
                   genero: "Leurotrigona", 
                   imagem: "res_leurotrigona.jpg", 
@@ -490,11 +518,12 @@
     };
 
     /* =========================================
-       5. CONTROLE DE FLUXO E RENDERIZAÇÃO
+       4. CONTROLE DE FLUXO (COM HISTÓRICO)
        ========================================= */
     let chaveAtual = null;
     let passosAtuais = [];
-    
+    let historicoPassos = [];
+
     function init() {
       const grid = document.getElementById('listaGrupos');
       grid.innerHTML = '';
@@ -511,9 +540,11 @@
     function carregarChave(key) {
       chaveAtual = key;
       passosAtuais = DADOS_CHAVE[key].passos;
+      historicoPassos = []; 
       document.getElementById('telaSelecao').classList.add('hidden');
       document.getElementById('telaChave').classList.remove('hidden');
       document.getElementById('tituloChaveAtiva').textContent = DADOS_CHAVE[key].titulo;
+      document.getElementById('btnVoltar').classList.add('hidden');
       renderizarPasso(1);
     }
 
@@ -522,6 +553,7 @@
       document.getElementById('telaChave').classList.add('hidden');
       document.getElementById('telaResultado').classList.add('hidden');
       document.getElementById('painelImagem').style.display = 'none';
+      historicoPassos = [];
     }
 
     function resetarChave() {
@@ -529,8 +561,18 @@
         document.getElementById('telaResultado').classList.add('hidden');
         document.getElementById('telaChave').classList.remove('hidden');
         document.getElementById('painelImagem').style.display = 'none';
+        historicoPassos = [];
+        document.getElementById('btnVoltar').classList.add('hidden');
         renderizarPasso(1);
       }
+    }
+
+    function voltarPasso() {
+      if(historicoPassos.length === 0) return;
+      const idAnterior = historicoPassos.pop();
+      document.getElementById('telaResultado').classList.add('hidden');
+      document.getElementById('telaChave').classList.remove('hidden');
+      renderizarPasso(idAnterior);
     }
 
     function encontrarPasso(id) {
@@ -540,6 +582,10 @@
     function renderizarPasso(id) {
       const passo = encontrarPasso(id);
       if(!passo) return alert("Erro: Passo " + id + " não encontrado.");
+
+      const btnVoltar = document.getElementById('btnVoltar');
+      if (historicoPassos.length > 0) btnVoltar.classList.remove('hidden');
+      else btnVoltar.classList.add('hidden');
 
       document.getElementById('indicadorPasso').textContent = id;
       const container = document.getElementById('containerDilemas');
@@ -557,11 +603,15 @@
 
         card.innerHTML = `
           <div class="flex gap-4">
-            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-slate-100 text-slate-700 font-bold text-xl flex items-center justify-center border border-slate-200">${dilema.rotulo}</div>
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-slate-100 text-slate-700 font-bold text-xl flex items-center justify-center border border-slate-200">
+              ${dilema.rotulo}
+            </div>
             <div class="flex-grow">
               <p class="text-slate-700 text-lg leading-relaxed font-normal">${textoComLinks}</p>
               <div class="mt-4 flex justify-end">
-                <span class="inline-block px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold uppercase rounded tracking-wider">${dilema.vaiPara ? 'Ir para Passo ' + dilema.vaiPara : 'Ver Resultado'}</span>
+                <span class="inline-block px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold uppercase rounded tracking-wider">
+                  ${dilema.vaiPara ? 'Ir para Passo ' + dilema.vaiPara : 'Ver Resultado'}
+                </span>
               </div>
             </div>
           </div>
@@ -569,6 +619,7 @@
 
         card.onclick = (e) => {
           if(e.target.classList.contains('termo')) return;
+          historicoPassos.push(id);
           if(dilema.resultado) mostrarResultado(dilema.resultado);
           else renderizarPasso(dilema.vaiPara);
         };
@@ -578,8 +629,13 @@
     }
 
     function mostrarResultado(dadosResultado) {
+      if (typeof dadosResultado === 'string') {
+        dadosResultado = { genero: dadosResultado, imagem: null, links: [] };
+      }
+
       document.getElementById('telaChave').classList.add('hidden');
       document.getElementById('telaResultado').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       document.getElementById('nomeGeneroFinal').textContent = dadosResultado.genero;
 
@@ -606,6 +662,8 @@
           `;
           listaLinks.appendChild(a);
         });
+      } else {
+         listaLinks.innerHTML = '<p class="text-sm text-slate-500 italic">Nenhum link externo cadastrado para este gênero.</p>';
       }
     }
 
