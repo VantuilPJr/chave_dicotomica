@@ -1,0 +1,9 @@
+#imagemExplicativa {
+  transform: scale(var(--zoom));
+  transform-origin: var(--x) var(--y);
+}
+
+#imagemExplicativa:hover {
+  --zoom: 2.2;
+  cursor: zoom-in;
+}

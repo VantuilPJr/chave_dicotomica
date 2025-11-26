@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chave Taxonômica Interativa — Meliponini</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    @media print { .no-print{display:none!important} body{color:#000;background:#fff} }
+
+    /* Zoom e Imagens */
+    .zoom-area { position: relative; overflow: hidden; width: fit-content; margin: 0 auto; cursor: crosshair; }
+    .zoom-area img { transition: transform 0.1s ease; transform-origin: var(--zoom-x, 50%) var(--zoom-y, 50%); max-width: 100%; border-radius: 8px; display: block; }
+    .zoom-area:hover img { transform: scale(2.5); }
+
+    .termo { color: #d97706; font-weight: 700; cursor: help; border-bottom: 2px dotted #d97706; transition: all 0.2s; }
+    .termo:hover { background-color: #fef3c7; color: #92400e; }
+
+    .taxon-card { transition: all 0.2s ease-in-out; }
+    .taxon-card:hover { transform: translateY(-2px); border-color: #f59e0b; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-amber-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">Ap</div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-slate-800">Guia de Identificação</h1>
+          <p class="text-xs text-slate-500 font-medium">Meliponini &amp; Grupos Relacionados</p>
+        </div>
+      </div>
+      <nav class="flex gap-2">
+        <button onclick="irParaInicio()" class="text-sm font-medium text-slate-600 hover:text-amber-700 px-3 py-2 rounded-lg hover:bg-slate-100 transition">Início</button>
+        <button onclick="resetarChave()" class="text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 px-3 py-2 rounded-lg shadow-sm transition flex items-center gap-2">Reiniciar</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-5xl mx-auto w-full px-4 py-8">
+    <div id="telaSelecao" class="space-y-6">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl font-bold text-slate-900">Qual grupo deseja identificar?</h2>
+        <p class="text-slate-600 mt-2">Selecione uma das chaves taxonômicas abaixo.</p>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6" id="listaGrupos"></div>
+    </div>
+
+    <div id="telaChave" class="hidden flex flex-col gap-6">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+        <div>
+          <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Chave Ativa</span>
+          <h2 id="tituloChaveAtiva" class="text-xl font-bold text-slate-800">...</h2>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-slate-400">Passo Atual</span>
+          <div id="indicadorPasso" class="text-2xl font-bold text-slate-700">1</div>
+        </div>
+      </div>
+      <div id="containerDilemas" class="grid gap-6 md:grid-cols-1"></div>
+      <div id="painelImagem" class="hidden bg-white p-6 rounded-xl border-2 border-slate-200 shadow-lg relative mt-4">
+        <div class="flex justify-between items-center mb-4">
+          <p class="text-sm font-bold text-slate-600 flex items-center gap-2">Ilustração da característica</p>
+          <button onclick="document.getElementById('painelImagem').style.display='none'" class="text-slate-400 hover:text-slate-700 text-sm font-bold">FECHAR ✕</button>
+        </div>
+        <div class="zoom-area bg-slate-50 border border-slate-100 rounded-lg">
+          <img id="painelImagemImg" src="" alt="Imagem ilustrativa">
+        </div>
+        <p class="text-xs text-center text-slate-400 mt-2">Passe o mouse para ampliar</p>
+      </div>
+    </div>
+
+    <div id="telaResultado" class="hidden py-10 max-w-2xl mx-auto">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center p-3 bg-green-100 text-green-700 rounded-full mb-4">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h2 class="text-3xl font-bold text-slate-900">Identificação Concluída</h2>
+        <p class="text-slate-600 mt-2">O espécime pertence ao gênero:</p>
+      </div>
+      <div class="bg-white border-2 border-green-500 rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-green-50 p-6 text-center border-b border-green-100">
+          <span id="nomeGeneroFinal" class="text-4xl font-bold text-slate-800 italic">Nome</span>
+        </div>
+        <div class="p-6 bg-white flex flex-col items-center">
+          <div class="w-full max-w-md bg-slate-100 rounded-lg overflow-hidden border border-slate-200 mb-2 relative">
+             <img id="imgResultadoFinal" class="w-full h-64 object-cover" src="" alt="Foto do gênero" onerror="this.src='https://via.placeholder.com/600x400?text=Sem+Imagem'">
+             <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1 px-3 text-center">Exemplo representativo</div>
+          </div>
+        </div>
+        <div class="bg-slate-50 p-6 border-t border-slate-100">
+          <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Referências Específicas</h3>
+          <div id="listaLinksExternos" class="space-y-3"></div>
+        </div>
+      </div>
+      <div class="mt-8 text-center">
+        <button onclick="resetarChave()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-8 rounded-lg shadow transition">Identificar outro espécime</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-6 mt-auto">
+    <div class="max-w-5xl mx-auto px-4 text-center text-sm text-slate-500">Ferramenta de Identificação Taxonômica • <span id="ano"></span></div>
+  </footer>
+
+  <script>
+    document.getElementById('ano').textContent = new Date().getFullYear();
+
+    /* =========================================
+       1. SISTEMA DE IMAGENS (Seu Original)
+       ========================================= */
+    const TERMOS_IMAGEM = [
+      "Abelhas muito pequenas","escutelo pouco projetado sobre o metanoto","espaço malar","cerdas da superfície interna do basitarso posterior formando fileiras transversais",
+      "com mais de 4 mm de comprimento", "espaço malar variável", "pelo menos porção mediana do metanoto encoberta pelo escutelo em vista dorsal",
+      "não formando fileiras transversais", "corbícula", "rastelo", "penicilo", "carena pré-occipital", 
+      "célula marginal", "metaposnoto", "basitarso posterior", "tíbia posterior", "triângulo propodeal",
+      "área sedosa basal", "mesepisterno", "esternos", "base da célula marginal bojuda", "mandíbula", "palpos labiais"
+    ];
+
+    function normalizarTermo(str){
+      return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^\w\s-]/g,"").replace(/\s+/g,"_");
+    }
+
+    function aplicarSpans(texto) {
+      TERMOS_IMAGEM.forEach(termo => {
+        const esc = termo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp('\\b' + esc + '\\b', 'gi');
+        texto = texto.replace(re, match => {
+          const fname = normalizarTermo(termo) + '.jpg';
+          return `<span class="termo" data-img="${fname}">${match}</span>`;
+        });
+      });
+      return texto;
+    }
+
+    document.addEventListener('click', function(e){
+      if(!e.target.classList.contains('termo')) return;
+      e.stopPropagation(); 
+      const arquivo = e.target.dataset.img;
+      const painel = document.getElementById('painelImagem');
+      const img = document.getElementById('painelImagemImg');
+      img.src = 'img/' + arquivo; 
+      painel.style.display = 'block';
+      painel.scrollIntoView({behavior:'smooth', block:'center'});
+    });
+
+    document.addEventListener('mousemove', function(e){
+      const el = e.target;
+      if(el.tagName !== 'IMG') return;
+      const zoomArea = el.closest('.zoom-area');
+      if(!zoomArea) return;
+      const rect = el.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      el.style.setProperty('--zoom-x', x+'%');
+      el.style.setProperty('--zoom-y', y+'%');
+    });
+
+    /* =========================================
+       2. DADOS DA CHAVE (COM LINKS ESPECÍFICOS)
+       ========================================= */
+    const DADOS_CHAVE = {
+      'Meliponini': {
+        titulo: 'Tribo Meliponini (Operárias)',
+        descricao: 'Chave para identificação de gêneros de abelhas sem ferrão (Neotropical). Texto completo.',
+        passos: [
+          {
+            id: 1,
+            dilemas: [
+              { rotulo: "1", texto: "Abelhas muito pequenas, corpo com 4 mm ou menos de comprimento (não considerando as asas); espaço malar amplo, pelo menos tão longo quanto o diâmetro do flagelo; escutelo pouco projetado sobre o metanoto, em vista dorsal porção medial do metanoto parcialmente visível; cerdas da superfície interna do basitarso posterior formando fileiras transversais (Fig. 8.24); faixa marginal glabra na superfície interna da tíbia posterior pelo menos tão larga quanto o diâmetro do flagelo (medida no meio da tíbia).", vaiPara: 2 },
+              { rotulo: "1'", texto: "Abelhas com tamanho variável, em geral corpo com mais de 4 mm de comprimento, se menores que 4 mm, frequentemente com áreas pigmentadas amarelas; espaço malar variável, em geral, mais curto que o diâmetro do flagelo; em geral, pelo menos porção mediana do metanoto encoberta pelo escutelo em vista dorsal, se visível, então abelhas com mais de 4 mm; cerdas da superfície interna do basitarso posterior não formando fileiras transversais (Figs. 8.28, 8.29, 8.30); largura da faixa marginal glabra na superfície interna da tíbia posterior variável, faixa muitas vezes estreita ou ausente.", vaiPara: 3 }
+            ]
+          },
+          {
+            id: 2,
+            dilemas: [
+              { 
+                rotulo: "2", 
+                texto: "Integumento em geral fosco e densamente pontilhado-reticulado, se brilhante então pelo menos com alguma reticulação evidente no mesossoma; base da célula marginal bojuda (Fig. 8.25); carena pré-occipital presente, em geral conspícua; escutelo distintamente convexo no sentido antero-posterior.", 
+                
+                /* --- RESULTADO: TRIGONISCA (Links Específicos) --- */
+                resultado: { 
+                  genero: "Trigonisca", 
+                  imagem: "res_trigonisca.jpg", // Nome da foto na pasta img/
+                  links: [
+                    { rotulo: "Catálogo Moure", url: "https://moure.cria.org.br/catalogue?id=117383" },
+                    { rotulo: "GBIF", url: "https://www.gbif.org/species/1341981" },
+                    { rotulo: "Fauna BR (JBRJ)", url: "https://fauna.jbrj.gov.br/fauna/listaBrasil/ConsultaPublicaUC/BemVindoConsultaPublicaConsultar.do?invalidatePageControlCounter=1&lingua=pt&jsonRank=&nomeCompleto=Trigonisca+Moure%2C+1950&autor=&nomeVernaculo=&rankTaxon=32767&nomeTaxon=&formaVida=QUALQUER&substrato=QUALQUER&ocorrencia=OCORRE&regiao=QUALQUER&estado=QUALQUER&endemismo=TODOS&origem=TODOS&mostrarAte=SUB_ESPECIE&opcoesBusca=NOME_ACEITO" },
+                    { rotulo: "Catalogue of Life", url: "https://www.catalogueoflife.org/data/search?TAXON_ID=7ZYB&rank=species&status=accepted&status=provisionally%20accepted" },
+                    { rotulo: "SpeciesLink", url: "https://abelha.cria.org.br/index" }
+                  ] 
+                } 
+              },
+              { 
+                rotulo: "2'", 
+                texto: "Integumento extremamente liso e brilhante, com pontuação muito fina e esparsa; base da célula marginal normal; carena pré-occipital ausente; escutelo achatado e plano.", 
+                
+                /* --- RESULTADO: LEUROTRIGONA (Exemplo Genérico - Você deve editar os links) --- */
+                resultado: { 
+                  genero: "Leurotrigona", 
+                  imagem: "res_leurotrigona.jpg", 
+                  links: [
+                    { rotulo: "Catálogo Moure", url: "http://moure.cria.org.br/catalogue?name=Leurotrigona" },
+                    { rotulo: "GBIF", url: "https://www.gbif.org/species/search?q=Leurotrigona" }
+                  ]
+                } 
+              }
+            ]
+          },
+          {
+            id: 3,
+            dilemas: [
+              { 
+                rotulo: "3", 
+                texto: "Fronte muito ampla (distância mínima entre os olhos distintamente maior que o comprimento dos olhos) (Fig. 8.26), sua superfície muito lisa e brilhante, praticamente glabra, pilosidade muito curta e esparsa; cabeça larga, cerca de 1,5x mais larga que largura do mesoscuto entre as tégulas; espaço malar amplo, mais longo que o diâmetro do flagelo (Fig. 8.26); faixa marginal glabra na superfície interna da tíbia posterior pelo menos tão larga quanto o diâmetro do flagelo (medida no meio da tíbia), sua superfície ligeiramente rebaixada em relação à área com quirotríquias, porém não formando um sulco amplo ao longo da margem da tíbia.", 
+                resultado: { 
+                  genero: "Oxytrigona", 
+                  imagem: "res_oxytrigona.jpg", 
+                  links: [ { rotulo: "Catálogo Moure", url: "http://moure.cria.org.br/catalogue?name=Oxytrigona" } ]
+                } 
+              },
+              { rotulo: "3'", texto: "Sem a combinação de caracteres acima.", vaiPara: 4 }
+            ]
+          },
+          {
+            id: 4,
+            dilemas: [
+              { 
+                rotulo: "4", 
+                texto: "Abelhas grandes e robustas, corpo com pelo menos 9 mm de comprimento; porção dorsal da região pré-occipital formando uma forte lamela (Fig. 8.27); espaço malar amplo, mais longo que o diâmetro do flagelo; dente basal da mandíbula bem desenvolvido, separado do dentículo seguinte por ampla emarginação; corbícula muito ampla, ocupando quase toda a superfície anterior da tíbia; escutelo não encobrindo o metanoto em vista dorsal; metanoto e propódeo coberto por pilosidade clara e finamente plumosa, no restante do corpo, pilosidade ereta relativamente curta, simples e deixando exposta a maior parte da superfície; integumento forte e densamente pontuado; faixa marginal glabra na superfície interna da tíbia posterior cerca de 2x mais larga que o diâmetro do flagelo (medida no meio da tíbia), sua superfície ligeiramente rebaixada em relação à área com quirotríquias, porém não formando um sulco amplo ao longo da margem da tíbia.", 
+                resultado: { genero: "Cephalotrigona", imagem: "res_cephalotrigona.jpg", links: [] } 
+              },
+              { rotulo: "4'", texto: "Sem a combinação de caracteres acima.", vaiPara: 5 }
+            ]
+          },
+          {
+            id: 5,
+            dilemas: [
+              { rotulo: "5", texto: "Superfície interna da tíbia posterior com faixa marginal fortemente deprimida, formando um amplo sulco ao longo dos 2/3 basais da margem posterior da tíbia (Fig. 8.28- Harry); ângulo submarginal variável, frequentemente aberto (Fig. 8.31); em geral, pelo menos terço distal da margem posterior da tíbia posterior com pêlos plumosos, estes quase ou tão longos quanto as cerdas simples (Fig. 8.28); canto distal posterior da tíbia posterior, em geral, arredondado e não formando ângulo, muito raramente terminando em ponta.", vaiPara: 6 },
+              { rotulo: "5'", texto: "Superfície interna da tíbia posterior com faixa marginal glabra estreita (distintamente mais estreita que a metade da largura da área com quirotríquias) (Fig. 8.29) ou faixa ausente (área com quirotríquias estendendo-se até a margem da tíbia) (Fig. 8.30); ângulo submarginal reto ou agudo (Fig. 8.32); margem posterior da tíbia posterior apenas com cerdas simples (Figs. 8.29, 8.30) ou apenas com cerdas plumosas, se com pêlos plumosos misturados às cerdas simples, então pêlos plumosos relativamente curtos e restritos ao quinto distal da tíbia; canto distal posterior da tíbia posterior usualmente terminando em ponta ou ângulo (Figs. 8.29, 8.30), raramente arredondado.", vaiPara: 14 }
+            ]
+          },
+          {
+            id: 6,
+            dilemas: [
+              { rotulo: "6", texto: "Superfície interna do basitarso posterior com uma área sedosa basal (Fig. 8.28); porções laterais de E3-E5 com pilosidade densa e ereta, na margem voltada para o meio do esterno, pêlos quase tão longos quanto cerdas longas medianas.", vaiPara: 7 },
+              { rotulo: "6'", texto: "Superfície interna do basitarso posterior apenas com cerdas simples, sem área sedosa; pilosidade nas porções laterais de E3-E5 variável, em geral curta e decumbente, em forte contraste com as cerdas longas medianas.", vaiPara: 8 }
+            ]
+          },
+          {
+            id: 7,
+            dilemas: [
+              { 
+                rotulo: "7", 
+                texto: "Abelhas pequenas, com menos de 5 mm de comprimento; cabeça e mesossoma com desenhos amarelos; bordo cortante da mandíbula apenas com 2 dentículos basais.", 
+                resultado: { genero: "Tetragonisca", imagem: "res_tetragonisca.jpg", links: [] } 
+              },
+              { 
+                rotulo: "7'", 
+                texto: "Abelhas de tamanho médio a grande, com pelos menos 5 mm de comprimento; integumento, em geral, preto, raramente castanho-avermelhado ou testáceo, desenhos amarelos sempre ausentes; bordo cortante da mandíbula com 4 a 5 dentes, pelo menos os 3 distais bem desenvolvidos.", 
+                resultado: { genero: "Trigona", imagem: "res_trigona.jpg", links: [] } 
+              }
+            ]
+          },
+          {
+            id: 8,
+            dilemas: [
+              { rotulo: "8", texto: "Esporão da tíbia média ausente; pilosidade no terço basal da superfície externa da tíbia variável, freqüentemente com muitos pêlos plumosos entre as cerdas simples; dentes da mandíbula pequenos e inconspícuos (Fig. 8.33).", vaiPara: 9 },
+              { rotulo: "8'", texto: "Esporão da tíbia média presente; pilosidade no terço basal da superfície externa da tíbia posterior com apenas alguns pêlos plumosos entre as cerdas simples; dentes da mandíbula, em geral, fortes e conspícuos (Figs. 8.34, 8.35).", vaiPara: 12 }
+            ]
+          },
+          {
+            id: 9,
+            dilemas: [
+              { 
+                rotulo: "9", 
+                texto: "Áreas pigmentadas amarelas ausentes, integumento preto ou castanho; porção central dos esternos com densa pilosidade ereta, em geral, pêlos com ápice curvo.", 
+                resultado: { genero: "Geotrigona", imagem: "res_geotrigona.jpg", links: [] } 
+              },
+              { rotulo: "9'", texto: "Desenhos amarelos sempre presentes, algumas vezes bastante reduzidos e restritos ao clípeo e áreas paroculares nas formas melânicas; porção central dos esternos com pilosidade esparsa, composta por cerdas longas e simples.", vaiPara: 10 }
+            ]
+          },
+          {
+            id: 10,
+            dilemas: [
+              { 
+                rotulo: "10", 
+                texto: "Olhos compostos cobertos por pilosidade curta, mas conspícua; corbícula ausente, superfície externa da tíbia posterior uniformemente coberta por pilosidade esparsa simples; rastelo e penicilo bastante reduzidos, compostos por pêlos relativamente finos; fronte e mesoscuto sem tomento, pilosidade predominantemente simples e ereta.", 
+                resultado: { genero: "Trichotrigona", imagem: "res_trichotrigona.jpg", links: [] } 
+              },
+              { rotulo: "10'", texto: "Olhos compostos com pilosidade diminuta e inconspícua; tíbia posterior com corbícula, algumas vezes pouco evidente e restrita ao quinto distal da tíbia, superfície externa da tíbia com amplas áreas praticamente glabras, contendo apenas poucas cerdas longas simples; rastelo e penicilo normais, formados por cerdas grossas e rígidas; fronte e mesoscuto com densa pilosidade plumosa entre os pêlos eretos simples, frequentemente formando um tomento.", vaiPara: 11 }
+            ]
+          },
+          {
+            id: 11,
+            dilemas: [
+              { 
+                rotulo: "11", 
+                texto: "Abelhas relativamente grandes, corpo (medido da cabeça à extremidade das asas anteriores) com pelo menos 11 mm de comprimento; vértice, atrás dos ocelos, bastante elevado e formando uma proeminente crista transversal (Fig. 8.33); canto distal posterior da tíbia posterior terminando em ponta.", 
+                resultado: { genero: "Duckeola", imagem: "res_duckeola.jpg", links: [] } 
+              },
+              { 
+                rotulo: "11'", 
+                texto: "Abelhas de tamanho pequeno a médio, corpo com 10 mm ou menos de comprimento; vértice não elevado acima dos ocelos; canto distal posterior da tíbia posterior arredondado.", 
+                resultado: { genero: "Frieseomelitta", imagem: "res_frieseomelitta.jpg", links: [] } 
+              }
+            ]
+          },
+          {
+            id: 12,
+            dilemas: [
+              { 
+                rotulo: "12", 
+                texto: "Metaposnoto (triângulo propodeal) glabro.", 
+                resultado: { genero: "Tetragona", imagem: "res_tetragona.jpg", links: [] } 
+              },
+              { rotulo: "12'", texto: "Metaposnoto, pelo menos lateralmente, coberto por pilosidade plumosa.", vaiPara: 13 }
+            ]
+          },
+          {
+            id: 13,
+            dilemas: [
+              { 
+                rotulo: "13", 
+                texto: "Triângulo propodeal inteiramente piloso; dentes da mandíbula bastante fortes (Fig. 8.34), recorte entre dente basal e 2o dente cerca de 1,5 vezes mais profundo que recorte seguinte; palpos labiais apenas com cerdas relativamente curtas e retas.", 
+                resultado: { genero: "Ptilotrigona", imagem: "res_ptilotrigona.jpg", links: [] } 
+              },
+              { 
+                rotulo: "13'", 
+                texto: "Triângulo propodeal com uma faixa glabra ao longo da linha média; dentes da mandíbula menos desenvolvidos (Fig. 8.35), recorte entre dente basal e 2o dente subigual ao recorte seguinte; palpos labiais com cerdas longas e sinuosas.", 
+                resultado: { genero: "Camargoia", imagem: "res_camargoia.jpg", links: [] } 
+              }
+            ]
+          },
+          {
+            id: 14,
+            dilemas: [
+              { 
+                rotulo: "14", 
+                texto: "Superfície externa da tíbia posterior convexa, sem corbícula (Fig. 8.36); penicilo ausente, rastelo composto por pêlos finos e bem curtos; labro modificado, sua porção central bastante deprimida, margens elevadas e protuberantes (Fig. 8.38); gena, em vista lateral, mais larga que largura do olho.", 
+                resultado: { genero: "Lestrimelitta", imagem: "res_lestrimelitta.jpg", links: [] } 
+              },
+              { rotulo: "14'", texto: "Superfície externa da tíbia posterior côncava, com corbícula bem desenvolvida (Fig. 8.37); penicilo presente, rastelo composto por cerdas rijas; labro normal, fracamente convexo a plano (Fig. 8.39); largura da gena variável, freqüentemente mais estreita que o olho.", vaiPara: 15 }
+            ]
+          },
+          {
+            id: 15,
+            dilemas: [
+              { rotulo: "15", texto: "Faixa marginal glabra na superfície interna da tíbia posterior claramente rebaixada em relação à área com quirotríquias (Fig. 8.29), formando um degrau ou rebordo ao longo da margem posterior da tíbia.", vaiPara: 16 },
+              { rotulo: "15'", texto: "Margem posterior da superfície interna da tíbia posterior sem degrau ou rebordo (Fig. 8.30), faixa marginal glabra, quando presente, no mesmo plano que área com quirotríquias.", vaiPara: 21 }
+            ]
+          },
+          {
+            id: 16,
+            dilemas: [
+              { rotulo: "16", texto: "Basitarso posterior inchado, sua superfície externa distintamente convexa, frequentemente mais largo que a tíbia, cerdas da margem anterior de sua superfície interna com ápice curvo (Fig. 8.29); rastelo ocupando quase toda a margem distal da superfície interna da tíbia posterior (Fig. 8.29); manchas amarelas ausentes.", vaiPara: 17 },
+              { rotulo: "16'", texto: "Basitarso posterior normal, sua superfície externa plana, sempre mais estreito que a tíbia, cerdas da margem anterior de sua superfície interna retas; rastelo ocupando não mais que 2/3 da margem distal da superfície interna da tíbia; manchas amarelas sempre presentes, algumas vezes reduzidas.", vaiPara: 18 }
+            ]
+          },
+          {
+            id: 17,
+            dilemas: [
+              { 
+                rotulo: "17", 
+                texto: "Basitarso posterior mais estreito que a tíbia; gena, em vista lateral, mais larga que o olho; espaço malar amplo, tão longo quanto o diâmetro do flagelo; mandíbulas robustas, bordo cortante com dois dentículos basais.", 
+                resultado: { genero: "Schwarzula", imagem: "res_schwarzula.jpg", links: [] } 
+              },
+              { 
+                rotulo: "17'", 
+                texto: "Basitarso posterior tão largo quanto ou mais largo que a tíbia (Fig. 8.29); gena, em vista lateral, mais estreita que o olho; espaço malar mais curto que o diâmetro do flagelo; mandíbulas mais delgadas, bordo cortante praticamente edentado.", 
+                resultado: { genero: "Scaura", imagem: "res_scaura.jpg", links: [] } 
+              }
+            ]
+          },
+          {
+            id: 18,
+            dilemas: [
+              { 
+                rotulo: "18", 
+                texto: "Integumento da cabeça e mesossoma predominantemente brilhante, pontuação pilígera relativamente fina e quase sempre esparsa; porção lateral do mesepisterno com pelo menos alguns pêlos eretos simples entre a pilosidade plumosa.", 
+                resultado: { genero: "Plebeia", imagem: "res_plebeia.jpg", links: [] } 
+              },
+              { rotulo: "18'", texto: "Cabeça e mesossoma com pontuação relativamente grossa e densa ou com integumento predominantemente fosco (neste caso pontuação pilígera obscurecida pelo microreticulado); pilosidade ereta nas laterais do mesepisterno sempre plumosa.", vaiPara: 19 }
+            ]
+          },
+          {
+            id: 19,
+            dilemas: [
+              { 
+                rotulo: "19", 
+                texto: "Abelhas pequenas, corpo com menos de 4 mm de comprimento; desenhos amarelos bastante reduzidos; pilosidade ereta nos esternos simples.", 
+                resultado: { genero: "Friesella", imagem: "res_friesella.jpg", links: [] } 
+              },
+              { rotulo: "19'", texto: "Abelhas de tamanho médio, corpo com mais de 5 mm de comprimento; cabeça e mesossoma com desenhos amarelos conspícuos; pilosidade ereta nos esternos predominantemente plumosa.", vaiPara: 20 }
+            ]
+          },
+          {
+            id: 20,
+            dilemas: [
+              { 
+                rotulo: "20", 
+                texto: "Integumento sem reflexos metálicos; mesoscuto fosco, pontuação pilígera pouco evidente; porção lateral do mesepisterno coberta por pilosidade densa e longa, pêlos nitidamente mais longos que os do mesoscuto.", 
+                resultado: { genero: "Schwarziana", imagem: "res_schwarziana.jpg", links: [] } 
+              },
+              { 
+                rotulo: "20'", 
+                texto: "Integumento com fracos reflexos metálicos; mesoscuto predominantemente brilhante, pontuação pilígera grossa e bem evidente; porção lateral do mesespisterno com pilosidade mais esparsa, pêlos tão longos quanto os do mesoscuto.", 
+                resultado: { genero: "Mourella", imagem: "res_mourella.jpg", links: [] } 
+              }
+            ]
+          },
+          {
+            id: 21,
+            dilemas: [
+              { 
+                rotulo: "21", 
+                texto: "Abelhas robustas, de tamanho médio a grande, corpo com pelo menos 7 mm de comprimento; fronte, vértice e mesossoma cobertos por pilosidade plumosa longa; metaposnoto piloso, sua superfície quase sempre finamente reticulada e fosca, raramente lisa e brilhante; ápice das asas não ultrapassando ou ultrapassando apenas um pouco o ápice do metassoma.", 
+                resultado: { genero: "Melipona", imagem: "res_melipona.jpg", links: [] } 
+              },
+              { rotulo: "21'", texto: "Abelhas de tamanho médio a pequeno, corpo com 7 mm ou menos de comprimento; pilosidade da cabeça e mesossoma predominantemente simples e curta; pilosidade e micro-escultura do metaposnoto variáveis, se microreticulado, então glabro, ou se piloso, então liso e brilhante.", vaiPara: 22 }
+            ]
+          },
+          {
+            id: 22,
+            dilemas: [
+              { rotulo: "22", texto: "Integumento da cabeça e/ou mesossoma finamente mate-reticulado e fosco ou com pontuação grossa e densa; escutelo fortemente projetado sobre o metanoto (Fig. 8.40).", vaiPara: 23 },
+              { rotulo: "22'", texto: "Integumento liso e brilhante, pontuação pilígera fina; escutelo relativamente curto, sua margem posterior, em vista dorsal, coincidindo com margem posterior do metanoto.", vaiPara: 26 }
+            ]
+          },
+          {
+            id: 23,
+            dilemas: [
+              { rotulo: "23", texto: "Cabeça e mesossoma com pontuação grossa e relativamente densa; base do escutelo com uma reentrância longitudinal mediana em forma de U ou V (Fig. 8.40); carena pré-occipital presente, muitas vezes, bem desenvolvida e lamelada; mandíbulas com apenas dois dentículos basais.", vaiPara: 24 },
+              { rotulo: "23'", texto: "Cabeça e mesossoma finamente mate-reticulados; escutelo sem reentrância basal; carena préoccipital ausente; mandíbulas quadridentadas, algumas vezes dentículos apicais fracamente diferenciados e unidos por um septo.", vaiPara: 25 }
+            ]
+          },
+          {
+            id: 24,
+            dilemas: [
+              { 
+                rotulo: "24", 
+                texto: "Margem posterior do escutelo, em vista dorsal, chanfrada ou emarginada na região mediana (Fig. 8.40); pelo menos escutelo fortemente ruguloso, carenas formando um padrão areolado (Fig. 8.40); carena pré-occipital não lamelada; palpos labiais com cerdas longas e sinuosas; tergos basais predominantemente lisos e brilhantes; margem posterior da porção dorsal de T1 reta; transição entre superfícies anterior vertical e posterior dorsal de T1 arredondada.", 
+                resultado: { genero: "Nannotrigona", imagem: "res_nannotrigona.jpg", links: [] } 
+              },
+              { 
+                rotulo: "24'", 
+                texto: "Margem posterior do escutelo inteira; mesoscuto e escutelo com pontuação forte e muito densa; carena pré-occipital pelo menos parcialmente lamelada; palpos labiais com cerdas curtas e retas; tergos inteiramente mate-reticulados, foscos; margem posterior da porção dorsal de T1 ligeiramente projetada para trás nos lados; superfícies anterior vertical e posterior dorsal de T1 separadas por uma carena.", 
+                resultado: { genero: "Scaptotrigona", imagem: "res_scaptotrigona.jpg", links: [] } 
+              }
+            ]
+          },
+          {
+            id: 25,
+            dilemas: [
+              { 
+                rotulo: "25", 
+                texto: "Superfície dos tergos brilhante, em forte contraste com mate-reticulado no restante do corpo; pilosidade, em geral, bastante conspícua.", 
+                resultado: { genero: "Aparatrigona", imagem: "res_aparatrigona.jpg", links: [] } 
+              },
+              { 
+                rotulo: "25'", 
+                texto: "Tergos mate-reticulados como restante do corpo; cabeça, laterais e dorso do mesossoma e tergos quase sempre apenas com pilosidade extremamente curta e inconspícua, raramente com pilosidade ereta evidente nestas regiões.", 
+                resultado: { genero: "Paratrigona", imagem: "res_paratrigona.jpg", links: [] } 
+              }
+            ]
+          },
+          {
+            id: 26,
+            dilemas: [
+              { 
+                rotulo: "26", 
+                texto: "Abelhas pequenas, corpo com 5 mm ou menos de comprimento; tíbia posterior normal, menos de 2,5 vezes mais larga que o fêmur; metaposnoto glabro; espaço malar mais curto que a metade do diâmetro do flagelo (Fig. 8.41).", 
+                resultado: { genero: "Nogueirapis", imagem: "res_nogueirapis.jpg", links: [] } 
+              },
+              { 
+                rotulo: "26'", 
+                texto: "Abelhas de tamanho médio, corpo entre 6 e 7 mm de comprimento; tíbia posterior muito alargada, em forma de colher, cerca de 3 vezes mais larga que o fêmur; metaposnoto piloso; espaço malar pelo menos tão longo quanto 2/3 do diâmetro do flagelo.", 
+                resultado: { genero: "Partamona", imagem: "res_partamona.jpg", links: [] } 
+              }
+            ]
+          }
+        ]
+      },
+      'Bombini': { titulo: 'Bombini', descricao: 'Chave demonstrativa em desenvolvimento.', passos: [] }
+    };
+
+    /* =========================================
+       5. CONTROLE DE FLUXO E RENDERIZAÇÃO
+       ========================================= */
+    let chaveAtual = null;
+    let passosAtuais = [];
+    
+    function init() {
+      const grid = document.getElementById('listaGrupos');
+      grid.innerHTML = '';
+      Object.keys(DADOS_CHAVE).forEach(key => {
+        const info = DADOS_CHAVE[key];
+        const card = document.createElement('div');
+        card.className = "bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-amber-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between";
+        card.onclick = () => carregarChave(key);
+        card.innerHTML = `<div><h3 class="text-xl font-bold text-slate-800">${info.titulo}</h3><p class="text-slate-600 mt-2 text-sm">${info.descricao}</p></div><div class="mt-4 text-amber-600 font-semibold text-sm flex items-center gap-1">Iniciar Identificação <span>→</span></div>`;
+        grid.appendChild(card);
+      });
+    }
+
+    function carregarChave(key) {
+      chaveAtual = key;
+      passosAtuais = DADOS_CHAVE[key].passos;
+      document.getElementById('telaSelecao').classList.add('hidden');
+      document.getElementById('telaChave').classList.remove('hidden');
+      document.getElementById('tituloChaveAtiva').textContent = DADOS_CHAVE[key].titulo;
+      renderizarPasso(1);
+    }
+
+    function irParaInicio() {
+      document.getElementById('telaSelecao').classList.remove('hidden');
+      document.getElementById('telaChave').classList.add('hidden');
+      document.getElementById('telaResultado').classList.add('hidden');
+      document.getElementById('painelImagem').style.display = 'none';
+    }
+
+    function resetarChave() {
+      if(chaveAtual) {
+        document.getElementById('telaResultado').classList.add('hidden');
+        document.getElementById('telaChave').classList.remove('hidden');
+        document.getElementById('painelImagem').style.display = 'none';
+        renderizarPasso(1);
+      }
+    }
+
+    function encontrarPasso(id) {
+      return passosAtuais.find(p => p.id === id);
+    }
+
+    function renderizarPasso(id) {
+      const passo = encontrarPasso(id);
+      if(!passo) return alert("Erro: Passo " + id + " não encontrado.");
+
+      document.getElementById('indicadorPasso').textContent = id;
+      const container = document.getElementById('containerDilemas');
+      container.innerHTML = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      const grid = document.createElement('div');
+      grid.className = "grid gap-6 md:grid-cols-1";
+
+      passo.dilemas.forEach(dilema => {
+        const card = document.createElement('div');
+        card.className = "taxon-card bg-white p-6 rounded-xl border-2 border-slate-100 cursor-pointer relative";
+        
+        const textoComLinks = aplicarSpans(dilema.texto);
+
+        card.innerHTML = `
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-slate-100 text-slate-700 font-bold text-xl flex items-center justify-center border border-slate-200">${dilema.rotulo}</div>
+            <div class="flex-grow">
+              <p class="text-slate-700 text-lg leading-relaxed font-normal">${textoComLinks}</p>
+              <div class="mt-4 flex justify-end">
+                <span class="inline-block px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold uppercase rounded tracking-wider">${dilema.vaiPara ? 'Ir para Passo ' + dilema.vaiPara : 'Ver Resultado'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        card.onclick = (e) => {
+          if(e.target.classList.contains('termo')) return;
+          if(dilema.resultado) mostrarResultado(dilema.resultado);
+          else renderizarPasso(dilema.vaiPara);
+        };
+        grid.appendChild(card);
+      });
+      container.appendChild(grid);
+    }
+
+    function mostrarResultado(dadosResultado) {
+      document.getElementById('telaChave').classList.add('hidden');
+      document.getElementById('telaResultado').classList.remove('hidden');
+
+      document.getElementById('nomeGeneroFinal').textContent = dadosResultado.genero;
+
+      const imgEl = document.getElementById('imgResultadoFinal');
+      if (dadosResultado.imagem) {
+        imgEl.src = 'img/' + dadosResultado.imagem;
+      } else {
+        imgEl.src = `https://via.placeholder.com/600x400?text=${dadosResultado.genero}`;
+      }
+
+      const listaLinks = document.getElementById('listaLinksExternos');
+      listaLinks.innerHTML = ''; 
+
+      if (dadosResultado.links && dadosResultado.links.length > 0) {
+        dadosResultado.links.forEach(link => {
+          const a = document.createElement('a');
+          a.href = link.url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.className = "block p-4 bg-white border border-slate-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition flex items-center justify-between group";
+          a.innerHTML = `
+            <span class="font-medium text-slate-700 group-hover:text-blue-700">${link.rotulo}</span>
+            <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+          `;
+          listaLinks.appendChild(a);
+        });
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
