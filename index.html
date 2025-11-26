@@ -115,7 +115,7 @@
 
       <div class="bg-white border-2 border-green-500 rounded-2xl shadow-xl overflow-hidden">
         <div class="bg-green-50 p-6 text-center border-b border-green-100">
-          <span id="nomeGeneroFinal" class="text-4xl font-bold text-slate-800 italic">Nome</span>
+          <span id="nomeGeneroFinal" class="text-4xl font-bold text-slate-800">Nome</span>
         </div>
         
         <div class="p-6 bg-white flex flex-col items-center">
@@ -154,8 +154,8 @@
     const TERMOS_IMAGEM = [
       "Abelhas muito pequenas","escutelo pouco projetado sobre o metanoto","espaço malar","cerdas da superfície interna do basitarso posterior formando fileiras transversais",
       "com mais de 4 mm de comprimento", "espaço malar variável", "pelo menos porção mediana do metanoto encoberta pelo escutelo em vista dorsal",
-      "não formando fileiras transversais", "corbícula", "rastelo", "penicilo", "carena pré-occipital", 
-      "célula marginal", "metaposnoto", "basitarso posterior", "tíbia posterior", "triângulo propodeal",
+      "não formando fileiras transversais", "corbícula", "rastelo", "penicilo",
+      "metaposnoto", "basitarso posterior", "triângulo propodeal",
       "área sedosa basal", "mesepisterno", "esternos", "base da célula marginal bojuda", "mandíbula", "palpos labiais"
     ];
 
@@ -206,15 +206,15 @@
         titulo: 'Tribo Meliponini Lepeletier, 1836',
         descricao: 'Chave para identificação de gêneros de abelhas sem ferrão (Neotropical).',
         imagemFundo: 'meliponini.jpeg', 
-        creditos: 'Modificada de Silveira et al 2002.',
+        creditos: 'Modificada de Silveira et al., 2002.',
         referencia: "Silveira, F. A., Melo, G. A., & Almeida, E. A. (2002). <em>Abelhas brasileiras: sistemática e identificação.</em> Fundação Araucária: Belo Horizonte, Brazil, 2002.",
         
         passos: [
           {
             id: 1,
             dilemas: [
-              { rotulo: "1", texto: "Abelhas muito pequenas, corpo com 4 mm ou menos de comprimento (não considerando as asas); espaço malar amplo, pelo menos tão longo quanto o diâmetro do flagelo; escutelo pouco projetado sobre o metanoto, em vista dorsal porção medial do metanoto parcialmente visível; cerdas da superfície interna do basitarso posterior formando fileiras transversais (Fig. 8.24); faixa marginal glabra na superfície interna da tíbia posterior pelo menos tão larga quanto o diâmetro do flagelo (medida no meio da tíbia).", vaiPara: 2 },
-              { rotulo: "1'", texto: "Abelhas com tamanho variável, em geral corpo com mais de 4 mm de comprimento, se menores que 4 mm, frequentemente com áreas pigmentadas amarelas; espaço malar variável, em geral, mais curto que o diâmetro do flagelo; em geral, pelo menos porção mediana do metanoto encoberta pelo escutelo em vista dorsal, se visível, então abelhas com mais de 4 mm; cerdas da superfície interna do basitarso posterior não formando fileiras transversais (Figs. 8.28, 8.29, 8.30); largura da faixa marginal glabra na superfície interna da tíbia posterior variável, faixa muitas vezes estreita ou ausente.", vaiPara: 3 }
+              { rotulo: "1", texto: "Abelhas muito pequenas, corpo com 4 mm ou menos de comprimento (não considerando as asas); espaço malar amplo, pelo menos tão longo quanto o diâmetro do flagelo; escutelo pouco projetado sobre o metanoto, em vista dorsal porção medial do metanoto parcialmente visível; cerdas da superfície interna do basitarso posterior formando fileiras transversais; faixa marginal glabra na superfície interna da tíbia posterior pelo menos tão larga quanto o diâmetro do flagelo (medida no meio da tíbia).", vaiPara: 2 },
+              { rotulo: "1'", texto: "Abelhas com tamanho variável, em geral corpo com mais de 4 mm de comprimento, se menores que 4 mm, frequentemente com áreas pigmentadas amarelas; espaço malar variável, em geral, mais curto que o diâmetro do flagelo; em geral, pelo menos porção mediana do metanoto encoberta pelo escutelo em vista dorsal, se visível, então abelhas com mais de 4 mm; cerdas da superfície interna do basitarso posterior não formando fileiras transversais; largura da faixa marginal glabra na superfície interna da tíbia posterior variável, faixa muitas vezes estreita ou ausente.", vaiPara: 3 }
             ]
           },
           {
@@ -222,9 +222,9 @@
             dilemas: [
               { 
                 rotulo: "2", 
-                texto: "Integumento em geral fosco e densamente pontilhado-reticulado, se brilhante então pelo menos com alguma reticulação evidente no mesossoma; base da célula marginal bojuda (Fig. 8.25); carena pré-occipital presente, em geral conspícua; escutelo distintamente convexo no sentido antero-posterior.", 
+                texto: "Integumento em geral fosco e densamente pontilhado-reticulado, se brilhante então pelo menos com alguma reticulação evidente no mesossoma; base da célula marginal bojuda; carena pré-occipital presente, em geral conspícua; escutelo distintamente convexo no sentido antero-posterior.", 
                 resultado: { 
-                  genero: "Trigonisca", 
+                  genero: "<i>Trigonisca</i> Moure, 1950", 
                   imagem: "res_trigonisca.jpg", 
                   links: [
                     { rotulo: "Catálogo Moure", url: "https://moure.cria.org.br/catalogue?id=117383" },
@@ -675,7 +675,7 @@
       container.appendChild(grid);
     }
 
-    function mostrarResultado(dadosResultado) {
+function mostrarResultado(dadosResultado) {
       if (typeof dadosResultado === 'string') {
         dadosResultado = { genero: dadosResultado, imagem: null, links: [] };
       }
@@ -683,8 +683,7 @@
       document.getElementById('telaChave').classList.add('hidden');
       document.getElementById('telaResultado').classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      document.getElementById('nomeGeneroFinal').textContent = dadosResultado.genero;
+      document.getElementById('nomeGeneroFinal').innerHTML = dadosResultado.genero;
 
       const imgEl = document.getElementById('imgResultadoFinal');
       if (dadosResultado.imagem) {
